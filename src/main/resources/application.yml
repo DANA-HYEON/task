@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: task_notice
+
+#업로드 사이즈 제한
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/task_db
+    hikari:
+      jdbc-url: jdbc:mysql://localhost:3306/task_db
+      username: dana
+      password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: true
+        highlight_sql: true
+
+logging:
+  level:
+    org.hibernate.sql: debug
+    # http메시지 서버에서 로그로 조회 가능
+    org.apache.coyote.http11: trace
+
+file:
+  dir: C:\workspace\file/
