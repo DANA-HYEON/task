@@ -4,21 +4,29 @@ import com.task.dto.MemberDto;
 import com.task.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/member")
 public class MemberController {
 
     private final MemberService memberService;
 
-    @PostMapping
+    @PostMapping("/member")
     public Long joinMember(@RequestBody MemberDto memberDto){
        return memberService.join(memberDto);
+    }
+
+    @GetMapping("/member/{id}")
+    public MemberDto getMember(@PathVariable Long id){
+        return memberService.findMember(id);
+    }
+
+    @GetMapping("/members")
+    public List<MemberDto> getMembers(){
+        return memberService.findMembers();
     }
 }

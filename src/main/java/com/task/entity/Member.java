@@ -1,5 +1,6 @@
 package com.task.entity;
 
+import com.task.dto.MemberDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +18,9 @@ public class Member extends BaseEntity{
     @Column(name = "NAME", nullable = false)
     private String name;
 
-    public Member(String name) {
-        this.name = name;
+    public static Member create(MemberDto dto) {
+        return Member.builder()
+                .name(dto.getName())
+                .build();
     }
 }
