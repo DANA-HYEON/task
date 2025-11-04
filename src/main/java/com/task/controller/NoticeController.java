@@ -55,11 +55,8 @@ public class NoticeController {
 //    }
 
     @PostMapping
-    public String notice(@RequestBody NoticeDto noticeDto
-                         ) throws IOException {
+    public String notice(@RequestBody NoticeDto noticeDto) throws IOException {
         noticeService.post(noticeDto);
         return "update=form";
     }
-
-
 }

@@ -1,5 +1,6 @@
 package com.task.entity;
 
+import com.task.dto.NoticeDto;
 import jakarta.persistence.*;
 import lombok.*;
 

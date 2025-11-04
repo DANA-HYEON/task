@@ -22,7 +22,9 @@ public class MemberService {
 
     //회원등록
     public Long join(MemberDto memberDto){
-        Member member = Member.create(memberDto);
+        Member member = Member.builder()
+                        .name(memberDto.getName())
+                        .build();
 
         memberRepository.save(member);
         return member.getId();

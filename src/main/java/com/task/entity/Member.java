@@ -17,10 +17,4 @@ public class Member extends BaseEntity{
 
     @Column(name = "NAME", nullable = false)
     private String name;
-
-    public static Member create(MemberDto dto) {
-        return Member.builder()
-                .name(dto.getName())
-                .build();
-    }
 }
