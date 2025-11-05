@@ -56,9 +56,25 @@ public class NoticeQueryRepository {
 
     public ResNoticeDetailDto getResNoticeDetailDto(Long noticeId) {
         //공지사항 가져오기
-        List<>
+        ResNoticeDetailDto resNoticeDetailDto = queryFactory
+                .select(new QResNoticeDetailDto(
+                        QNotice.notice.id,
+                        QNotice.notice.title,
+                        QNotice.notice.content,
+                        QNotice.notice.modifiedBy,
+                        QNotice.notice.lastModifiedDate,
+                        QNotice.notice.viewCount
+                ))
+                .from(QNotice.notice)
+                .where(QNotice.notice.id.eq(noticeId))
+                .fetchOne();
+
+        if(resNoticeDetailDto == null){
+            throw new IllegalStateException("공지사항이 존재하지 않습니다.");
+        }
+
         //파일 가져오기
-        List<UploadFileCdnDto> fetch = queryFactory
+        List<UploadFileCdnDto> uploadFileCdnDtoList = queryFactory
                 .select(new QUploadFileCdnDto(
                         QUploadFile.uploadFile.id,
                         QUploadFile.uploadFile.uploadFileName,
@@ -66,9 +82,15 @@ public class NoticeQueryRepository {
                 ))
                 .from(QUploadFile.uploadFile)
                 .where(QUploadFile.uploadFile.notice.id.eq(noticeId))
+                .orderBy(QUploadFile.uploadFile.lastModifiedDate.desc())
                 .fetch();
 
-    }
+        //공지사항 상세에 파일리스트 저장
+        if(uploadFileCdnDtoList != null && !uploadFileCdnDtoList.isEmpty()){
+            resNoticeDetailDto.setUploadFilePathCdnList(uploadFileCdnDtoList);
+        }
 
+        return resNoticeDetailDto;
+    }
 
 }

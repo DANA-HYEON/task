@@ -65,12 +65,27 @@ public class NoticeService {
 
             //TODO: bulk insert 교체 필요
 //        if (!uploadImageFiles.isEmpty()) {
-//            uploadFileRepository.saveAll(uploadImageFiles); // ✅ cascade 없으니 자식 직접 저장 필수
+//            uploadFileRepository.saveAll(uploadImageFiles); //cascade 없으니 자식 직접 저장 필수..왜cascade안쓰지
 //        }
         return notice.getId();
     }
 
     public ResNoticeDetailDto getNoticeDetail(Long noticeId) {
         return noticeQueryRepository.getResNoticeDetailDto(noticeId);
+    }
+
+    public Boolean deleteNotice(Long noticeId) {
+        //해당 공지사항이 있는지 확인
+        if(!noticeRepository.existsById(noticeId)){
+            throw new IllegalStateException("존재하지 않는 공지사항 입니다.");
+        }
+
+        //공지사항과 연결된 첨부파일들 먼저 삭제
+        uploadFileRepository.deleteAllByNoticeId(noticeId);
+        //공지사항 삭제
+        noticeRepository.deleteById(noticeId);
+        
+        //실제로 삭제되었는지 확인
+        return !noticeRepository.existsById(noticeId);
     }
 }

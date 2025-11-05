@@ -12,5 +12,4 @@ public class NoticeDto {
     private Long memberId;
     private String title;
     private String content;
-//    private List<UploadFileDto> files;
 }
