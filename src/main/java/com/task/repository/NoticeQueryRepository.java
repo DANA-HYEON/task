@@ -3,9 +3,7 @@ package com.task.repository;
 import com.querydsl.core.types.Expression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.task.dto.QResNoticeDto;
-import com.task.dto.ResNoticeDetailDto;
-import com.task.dto.ResNoticeDto;
+import com.task.dto.*;
 import com.task.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -58,7 +56,17 @@ public class NoticeQueryRepository {
 
     public ResNoticeDetailDto getResNoticeDetailDto(Long noticeId) {
         //공지사항 가져오기
+        List<>
         //파일 가져오기
+        List<UploadFileCdnDto> fetch = queryFactory
+                .select(new QUploadFileCdnDto(
+                        QUploadFile.uploadFile.id,
+                        QUploadFile.uploadFile.uploadFileName,
+                        QUploadFile.uploadFile.storeFileName
+                ))
+                .from(QUploadFile.uploadFile)
+                .where(QUploadFile.uploadFile.notice.id.eq(noticeId))
+                .fetch();
 
     }
 
