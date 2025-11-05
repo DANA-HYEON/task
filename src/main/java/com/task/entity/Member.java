@@ -1,6 +1,5 @@
 package com.task.entity;
 
-import com.task.dto.MemberDto;
 import jakarta.persistence.*;
 import lombok.*;
 

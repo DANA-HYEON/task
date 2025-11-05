@@ -1,0 +1,83 @@
+package com.task.util;
+
+import com.task.entity.UploadFile;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@Component
+@Transactional
+@RequiredArgsConstructor
+public class UploadFileUtil {
+
+    @Value("${file.dir}")
+    private static String fileDir;
+
+    /**
+     * 저장할 파일의 전체 경로를 반환
+     * @return file.dir + filename -> /Users/이다현/workspace/file/a.png
+     */
+    public static String getFullPath(String filename) {
+        return fileDir + filename;
+    }
+
+    /**
+     * 다중 파일 업로드를 처리
+     */
+    public static List<UploadFile> storeFiles(List<MultipartFile> multipartFiles) throws IOException {
+        List<UploadFile> storeFileResult = new ArrayList<>();
+
+        for (MultipartFile multipartFile : multipartFiles) {
+            if (!multipartFile.isEmpty()) {
+                //파일 저장
+                storeFileResult.add(storeFile(multipartFile));
+            }
+        }
+        return storeFileResult;
+    }
+
+    /**
+     * 단일 파일을 실제 디스크에 저장
+     */
+    public static UploadFile storeFile(MultipartFile multipartFile) throws IOException {
+        if (multipartFile.isEmpty()) {
+            return null;
+        }
+
+        String originalFilename = multipartFile.getOriginalFilename();
+        String storeFileName = createStoreFileName(originalFilename);
+        
+        //디스크 저장
+        multipartFile.transferTo(new File(getFullPath(storeFileName)));
+
+        return new UploadFile(originalFilename, storeFileName);
+    }
+
+    /**
+     * 파일 이름 중복을 방지 위해, 랜덤 UUID + 원래 확장자 형식의 새 이름 생성
+     */
+    private static String createStoreFileName(String originalFilename) {
+        String ext = extractExt(originalFilename);
+        String uuid = UUID.randomUUID().toString();
+        return uuid + "." + ext;
+    }
+
+    /**
+     * 파일의 확장자만 추출
+     * "cat.png" → "png"
+     */
+    private static String extractExt(String originalFilename) {
+        int pos = originalFilename.lastIndexOf(".");
+        return originalFilename.substring(pos + 1);
+    }
+}

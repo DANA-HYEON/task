@@ -2,36 +2,35 @@ package com.task.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class File {
+@AllArgsConstructor
+public class UploadFile extends BaseEntity{
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "FILE_ID")
+    @Column(name = "UPLOAD_FILE_ID")
     private Long id;
 
     //고객이 업로드한 파일명
     private String uploadFileName;
-    //서버 내부에서 관리하는 파일명
+    // 서버 내부에서 관리하는 파일
     private String storeFileName;
-    private String filePath;
-    private String fileType;
-    private String fileSize;
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "NOTICE_ID")
     private Notice notice;
 
-    public File(Long id, String uploadFileName, String storeFileName, String filePath, String fileType, String fileSize) {
-        this.id = id;
+    public UploadFile(String uploadFileName, String storeFileName) {
         this.uploadFileName = uploadFileName;
         this.storeFileName = storeFileName;
-        this.filePath = filePath;
-        this.fileType = fileType;
-        this.fileSize = fileSize;
+    }
+
+    public void setNotice(Notice notice){
+        this.notice = notice;
     }
 }

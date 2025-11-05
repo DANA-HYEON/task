@@ -1,25 +1,19 @@
 package com.task.controller;
 
-import com.task.dto.MemberDto;
 import com.task.dto.NoticeDto;
+import com.task.dto.ResNoticeDetailDto;
+import com.task.dto.ResNoticeDto;
 import com.task.service.NoticeService;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.Part;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.StreamUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
+import java.util.List;
+
 
 @Slf4j
 @RestController
@@ -32,31 +26,21 @@ public class NoticeController {
 
     private final NoticeService noticeService;
 
-//    @GetMapping
-//    public List<Notice> noticeList(){
-//        return "notice list";
-//    }
+    @GetMapping
+    public List<ResNoticeDto> noticeList(){
+        return noticeService.getNoticeList();
+    }
 
-//    @PostMapping
-//    public String notice(HttpServletRequest request,
-//                         @RequestPart("notice") NoticeDto noticeDto,
-//                         @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
-////        log.info("request={}",request);
-////        log.info("MultipartFile={}",file);
-//
-//        if (!file.isEmpty()) {
-//            String fullPath = fileDir + file.getOriginalFilename();
-//            log.info("파일 저장 fullPath={}", fullPath);
-//            file.transferTo(new File(fullPath));
-//        }
-//
-//        noticeService.post(noticeDto, file);
-//        return "update=form";
-//    }
+    @GetMapping("/{id}")
+    public ResNoticeDetailDto getNoticeDetail(   @PathVariable Long noticeId){
+        return noticeService.getNoticeDetail(noticeId);
+    }
 
     @PostMapping
-    public String notice(@RequestBody NoticeDto noticeDto) throws IOException {
-        noticeService.post(noticeDto);
-        return "update=form";
+    public Long saveNoticePost(HttpServletRequest request,
+                         @RequestPart("notice") NoticeDto noticeDto, //reqNoticeDto따로 만들기
+                         @RequestPart(value = "imageFiles", required = false) List<MultipartFile> files) throws IOException {
+
+        return noticeService.saveNoticePost(noticeDto, files);
     }
 }

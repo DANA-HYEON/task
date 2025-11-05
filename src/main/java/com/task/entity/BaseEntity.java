@@ -1,29 +1,32 @@
 package com.task.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import lombok.Getter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+@EntityListeners(AuditingEntityListener.class)
 @MappedSuperclass
 @Getter
 public class BaseEntity {
-    @Column(updatable = false)
+    @CreatedDate
+    @Column(updatable=false)
     private LocalDateTime createdDate;
-    private LocalDateTime updatedDate;
 
-    @PrePersist //저장하기전에 이 이벤트 발생
-    public void prePersist(){
-        LocalDateTime now = LocalDateTime.now();
-        createdDate = now;
-        updatedDate = now;
-    }
+    @LastModifiedDate
+    private LocalDateTime lastModifiedDate;
 
-    @PreUpdate
-    public void preUpdate(){
-        updatedDate = LocalDateTime.now();
-    }
+    @CreatedBy
+    @Column(updatable = false)
+    private String createdBy;
+
+    @LastModifiedBy
+    private String modifiedBy;
 }
