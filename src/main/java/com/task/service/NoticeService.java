@@ -13,12 +13,20 @@ import com.task.repository.UploadFileRepository;
 import com.task.util.UploadFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -34,16 +42,19 @@ public class NoticeService {
 
     //queryDsl
     @Transactional(readOnly = true)
-    public List<ResNoticeDto> getNoticeList(){
-        return noticeQueryRepository.getResNoticeDto();
+    public ResponseEntity<List<ResNoticeDto>> getNoticeList(){
+        List<ResNoticeDto> resNoticeDto = noticeQueryRepository.getResNoticeDto();
+        return ResponseEntity.ok()
+                .body(resNoticeDto);
     }
 
 
-    public Long saveNoticePost(NoticeDto noticeDto, List<MultipartFile> files) throws IOException {
+    public ResponseEntity<Long> saveNoticePost(NoticeDto noticeDto, List<MultipartFile> files) throws IOException {
         //회원 조회
         Long memberId = noticeDto.getMemberId();
         Member findMember = memberRepository.findById(memberId).orElseThrow();
 
+        //notice 객체 생성
         Notice saveNotice = Notice.builder()
                 .title(noticeDto.getTitle())
                 .content(noticeDto.getContent())
@@ -51,6 +62,7 @@ public class NoticeService {
                 .member(findMember)
                 .build();
 
+        //notice db 저장
         Notice notice = noticeRepository.save(saveNotice); //부모 저장
    
         //파일 디스크에 저장
@@ -67,11 +79,16 @@ public class NoticeService {
 //        if (!uploadImageFiles.isEmpty()) {
 //            uploadFileRepository.saveAll(uploadImageFiles); //cascade 없으니 자식 직접 저장 필수..왜cascade안쓰지
 //        }
-        return notice.getId();
+
+        return ResponseEntity.ok()
+                .body(notice.getId());
     }
 
-    public ResNoticeDetailDto getNoticeDetail(Long noticeId) {
-        return noticeQueryRepository.getResNoticeDetailDto(noticeId);
+    public ResponseEntity<ResNoticeDetailDto> getNoticeDetail(Long noticeId) {
+        ResNoticeDetailDto resNoticeDetailDto = noticeQueryRepository.getResNoticeDetailDto(noticeId);
+
+        return ResponseEntity.ok()
+                .body(resNoticeDetailDto);
     }
 
     public Boolean deleteNotice(Long noticeId) {
@@ -87,5 +104,31 @@ public class NoticeService {
         
         //실제로 삭제되었는지 확인
         return !noticeRepository.existsById(noticeId);
+    }
+
+    public ResponseEntity<Resource> downloadFile(Long fileId) throws MalformedURLException {
+        UploadFile uploadFile = uploadFileRepository.findById(fileId).orElse(null);
+
+        if(uploadFile == null){
+            throw new IllegalStateException("존재하지 않는 파일입니다.");
+        }
+
+        String storeFileName = uploadFile.getStoreFileName();
+        String uploadFileName = uploadFile.getUploadFileName();
+
+        UrlResource resource = new UrlResource("file:" + uploadFileUtil.getFullPath(storeFileName));
+
+        log.info("uploadFileName={}", uploadFileName);
+
+        String encodedUploadFileName = UriUtils.encode(uploadFileName, StandardCharsets.UTF_8);
+        String contentDisposition = "attachment; filename=\"" + encodedUploadFileName + "\"";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .body(resource);
+    }
+
+    public List<Notice> test(){
+        return noticeRepository.findAll();
     }
 }

@@ -19,7 +19,10 @@ public class Notice extends BaseEntity {
     @Column(name = "NOTICE_ID")
     private Long id;
 
+    @Column(name = "TITLE")
     private String title;
+
+    @Column(name = "CONTENT")
     private String content;
 
     @Column(name = "VIEW_COUNT", nullable = false)

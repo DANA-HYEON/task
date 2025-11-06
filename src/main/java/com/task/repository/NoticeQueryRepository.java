@@ -55,6 +55,22 @@ public class NoticeQueryRepository {
     }
 
     public ResNoticeDetailDto getResNoticeDetailDto(Long noticeId) {
+        //@Query("""
+        //    select distinct n
+        //    from Notice n
+        //    join fetch n.member
+        //    left join fetch n.uploadFiles
+        //    where n.id = :id
+        //""")
+        //Optional<Notice> findDetailWithMemberAndFiles(@Param("id") Long id);
+
+//        Notice notice = queryFactory
+//                .selectFrom(QNotice.notice).distinct()
+//                .join(QNotice.notice.member, QMember.member).fetchJoin()
+//                .leftJoin(QNotice.notice.uploadFiles, QUploadFile.uploadFile).fetchJoin()
+//                .where(QNotice.notice.id.eq(id))
+//                .fetchOne();
+
         //공지사항 가져오기
         ResNoticeDetailDto resNoticeDetailDto = queryFactory
                 .select(new QResNoticeDetailDto(

@@ -32,18 +32,16 @@ public class MemberService {
 
     //회원조회
     public MemberDto findMember(Long id){
-        Member findMember = memberRepository.findById(id).orElseThrow();
+        Member findMember = memberRepository.findById(id).orElse(null);
+        if(findMember == null){
+            throw new IllegalStateException("유저가 존재하지 않습니다");
+        }
         return new MemberDto(findMember.getId(), findMember.getName());
     }
 
     //모든회원조회
     public List<MemberDto> findMembers(){
         List<Member> findMembers = memberRepository.findAll();
-        //엔티티 -> DTO 변환
-        List<MemberDto> collect = findMembers.stream()
-                .map(m -> new MemberDto(m.getId(), m.getName()))
-                .collect(Collectors.toList());
-
-        return collect;
+        return findMembers.stream().map(MemberDto::new).toList();
     }
 }
