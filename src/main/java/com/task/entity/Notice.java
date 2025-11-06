@@ -51,4 +51,19 @@ public class Notice extends BaseEntity {
         this.uploadFiles.remove(file);
         file.setNotice(null);
     }
+
+    //수정 메서드
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+//    //파일 수정 메서드 (기존 파일 제거 + 새 파일 추가)
+//    public void updateFiles(List<UploadFile> newFiles) {
+//        this.uploadFiles.clear();
+//        for (UploadFile file : newFiles) {
+//            addFile(file);
+//        }
+//    }
+
 }

@@ -47,7 +47,7 @@ public class NoticeController {
     @PostMapping
     public ResponseEntity<Long> saveNoticePost(HttpServletRequest request,
                          @RequestPart("notice") NoticeDto noticeDto, //reqNoticeDto따로 만들기
-                         @RequestPart(value = "imageFiles", required = false) List<MultipartFile> files) throws IOException {
+                         @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
 
         //TODO: 등록 이미지, 갯수 용량 제한하기
         return noticeService.saveNoticePost(noticeDto, files);
@@ -69,8 +69,15 @@ public class NoticeController {
     }
 
     //공지사항 수정
-//    @PutMapping
-//    public
+    @PutMapping("/{noticeId}")
+    public ResponseEntity<ResNoticeDetailDto> updateNotice(HttpServletRequest request,
+                                               @PathVariable Long noticeId,
+                                               @RequestPart("notice") NoticeDto noticeDto, //reqNoticeDto따로 만들기
+                                               @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+
+        //TODO: 등록 이미지, 갯수 용량 제한하기
+        return noticeService.updateNotice(noticeId, noticeDto, files);
+    }
     
     //공지사항 조회수 등록(중복 방지 체크)
 }
