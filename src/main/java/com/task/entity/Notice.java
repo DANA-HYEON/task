@@ -40,16 +40,19 @@ public class Notice extends BaseEntity {
     //연관관계 메서드
     public void addFile(UploadFile uploadFile){
         if(uploadFiles == null) return;
-
         this.uploadFiles.add(uploadFile);
         uploadFile.setNotice(this);
     }
 
     //연관관계 메서드
-    public void removeFile(UploadFile file){
-        if(file == null) return;
-        this.uploadFiles.remove(file);
-        file.setNotice(null);
+    public void removeFile(UploadFile uploadFile){
+        if(uploadFile == null) return;
+        this.uploadFiles.remove(uploadFile);
+        uploadFile.setNotice(null);
+    }
+
+    public void updateViewCount(){
+        this.viewCount += 1;
     }
 
     //수정 메서드
@@ -57,13 +60,4 @@ public class Notice extends BaseEntity {
         this.title = title;
         this.content = content;
     }
-
-//    //파일 수정 메서드 (기존 파일 제거 + 새 파일 추가)
-//    public void updateFiles(List<UploadFile> newFiles) {
-//        this.uploadFiles.clear();
-//        for (UploadFile file : newFiles) {
-//            addFile(file);
-//        }
-//    }
-
 }

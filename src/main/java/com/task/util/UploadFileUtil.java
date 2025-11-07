@@ -10,6 +10,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -63,28 +66,14 @@ public class UploadFileUtil {
         return new UploadFile(originalFilename, storeFileName);
     }
 
-    /**
-     * 단일 파일을 실제 디스크에서 삭제
-     */
-    public boolean deleteFiles(List<String> storeFileNames) throws IOException {
-        boolean result = true;
+    //첨부파일 삭제
+    public void deleteUploadFile(UploadFile uploadFile) throws IOException {
+        String fullPath = getFullPath(uploadFile.getStoreFileName());
+        Path filePath = Paths.get(fullPath);
 
-        for (String storeFileName : storeFileNames) {
-            File file = new File(getFullPath(storeFileName));
-            if (file.exists()) {
-                result = file.delete();
-            }
-        }
-
-        return result;
+        //디스크 파일 삭제
+        Files.deleteIfExists(filePath);
     }
-
-//    public void deleteFiles(List<String> storeFileNames) {
-//        if (storeFileNames == null || storeFileNames.isEmpty()) return;
-//        for (String name : storeFileNames) {
-//            deleteFiles(name); // 단건 삭제 (Files.delete(Path) 쓰면 실패 원인 파악 가능)
-//        }
-//    }
 
     /**
      * 파일 이름 중복을 방지 위해, 랜덤 UUID + 원래 확장자 형식의 새 이름 생성

@@ -3,23 +3,17 @@ package com.task.controller;
 import com.task.dto.NoticeDto;
 import com.task.dto.ResNoticeDetailDto;
 import com.task.dto.ResNoticeDto;
-import com.task.entity.UploadFile;
-import com.task.repository.UploadFileRepository;
 import com.task.service.NoticeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 
@@ -54,11 +48,10 @@ public class NoticeController {
     }
 
     //공지사항 삭제
+    //TODO:삭제 요청한 유저와 공지사항 등록한 유저가 같으면 or 권한이 있으면 삭제 로직 추가
     @DeleteMapping("/{noticeId}")
     public Boolean deleteNotice(HttpServletRequest request,
                                 @PathVariable Long noticeId){
-        //TODO:삭제 요청한 유저와 공지사항 등록한 유저가 같으면 or 권한이 있으면 삭제 로직 추가
-        //TODO: 디스크에 저장된 이미지도 삭제하기
         return noticeService.deleteNotice(noticeId);
     }
 
@@ -70,14 +63,27 @@ public class NoticeController {
 
     //공지사항 수정
     @PutMapping("/{noticeId}")
-    public ResponseEntity<ResNoticeDetailDto> updateNotice(HttpServletRequest request,
+    public ResponseEntity<Long> updateNotice(
+                                               HttpServletRequest request,
                                                @PathVariable Long noticeId,
                                                @RequestPart("notice") NoticeDto noticeDto, //reqNoticeDto따로 만들기
+                                               @RequestPart("originFileIds") List<Long> originFileIds,
                                                @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+        noticeService.updateNotice(noticeId, noticeDto, originFileIds, files);
+        return ResponseEntity.ok()
+                .body(noticeId);
 
-        //TODO: 등록 이미지, 갯수 용량 제한하기
-        return noticeService.updateNotice(noticeId, noticeDto, files);
     }
     
-    //공지사항 조회수 등록(중복 방지 체크)
+    //공지사항 조회수 등록
+    //TODO: (중복 방지 체크) 현재 안되어있음
+    @PostMapping("/{noticeId}/view")
+    public ResponseEntity<String> updateViewCount(
+                                                HttpServletRequest request,
+                                                @PathVariable Long noticeId){
+
+        noticeService.updateViewCount(noticeId);
+        return ResponseEntity.ok()
+                .body("test");
+    }
 }

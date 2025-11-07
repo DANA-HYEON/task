@@ -25,6 +25,7 @@ import org.springframework.web.util.UriUtils;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -72,7 +73,6 @@ public class NoticeService {
         for (UploadFile uploadImageFile : uploadImageFiles) {
             notice.addFile(uploadImageFile); //연관관계 연결
             //db 저장
-            //TODO: bulk insert 교체 필요
             uploadFileRepository.save(uploadImageFile);
         }
 
@@ -93,18 +93,23 @@ public class NoticeService {
                 .body(resNoticeDetailDto);
     }
 
-    public Boolean deleteNotice(Long noticeId) {
+    public Boolean deleteNotice(Long noticeId){
         //해당 공지사항이 있는지 확인
-        if(!noticeRepository.existsById(noticeId)){
-            throw new IllegalStateException("존재하지 않는 공지사항 입니다.");
+        Notice notice = noticeRepository.findById(noticeId).orElseThrow(() -> new IllegalStateException("존재하지 않는 공지사항입니다."));
+
+        List<UploadFile> uploadFiles = notice.getUploadFiles();
+
+        try {
+            for (UploadFile uploadFile : uploadFiles) {
+                uploadFileRepository.delete(uploadFile); //db삭제
+                uploadFileUtil.deleteUploadFile(uploadFile); //디스크 삭제
+            }
+        }catch (Exception e){
+            log.error(e.getMessage());
         }
 
-        //공지사항과 연결된 첨부파일들 먼저 삭제
-        uploadFileRepository.deleteAllByNoticeId(noticeId);
         //공지사항 삭제
         noticeRepository.deleteById(noticeId);
-        
-        //실제로 삭제되었는지 확인
         return !noticeRepository.existsById(noticeId);
     }
 
@@ -134,94 +139,48 @@ public class NoticeService {
         return noticeRepository.findAll();
     }
 
-    public ResponseEntity<ResNoticeDetailDto> updateNotice(Long noticeId, NoticeDto noticeDto, List<MultipartFile> files) throws IOException {
+    //TODO: 수정요청자와 작성자가 같은지 체크해야함.
+    public void updateNotice(Long noticeId, NoticeDto noticeDto, List<Long> originFileIds, List<MultipartFile> files) throws IOException {
         //수정할 공지사항 조회
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalStateException("존재하지 않는 공지사항입니다."));
-
-        //TODO: 수정요청자와 작성자가 같은지 체크해야함.
         //공지사항 db 수정
         notice.update(noticeDto.getTitle(), noticeDto.getContent());
 
-        //첨부파일 디스크에서 삭제
-        boolean isExistFiles = files != null && files.stream().anyMatch(Objects::nonNull);
-        if(isExistFiles){
+        //수정할 공지사항의 첨부파일 리스트 가져오기
+        List<UploadFile> findAllUploadFiles = uploadFileRepository.findAllByNoticeId(noticeId);
 
-        }
-        List<UploadFile> uploadFiles = notice.getUploadFiles();
-        List<String> fileNamelist = uploadFiles.stream().map(UploadFile::getStoreFileName).toList();
-        boolean fileDeleteResult = uploadFileUtil.deleteFiles(fileNamelist);
+        //삭제할 대상 리스트
+        List<UploadFile> toDelete = new ArrayList<>();
 
-        //첨부파일 db 수정
-        if(fileDeleteResult){
-            uploadFileRepository.deleteAllByNoticeId(noticeId);
-            for (UploadFile uploadFile : uploadFiles) {
-                notice.removeFile(uploadFile);
+        //기존 첨부파일 리스트를 순회하며 요청값에 존재하지 않으면 삭제할 대상 리스트에 추가
+        for (UploadFile findUploadFile : findAllUploadFiles) {
+            if (!originFileIds.contains(findUploadFile.getId())) {
+                toDelete.add(findUploadFile);
             }
-
-            //파일 디스크에 저장
-            List<UploadFile> uploadImageFiles = uploadFileUtil.storeFiles(files);
-
-            for (UploadFile uploadImageFile : uploadImageFiles) {
-                notice.addFile(uploadImageFile); //연관관계 연결
-                //db 저장
-                //TODO: bulk insert 교체 필요
-                uploadFileRepository.save(uploadImageFile);
-            }
-
         }
 
-        ResNoticeDetailDto dto = noticeQueryRepository.getResNoticeDetailDto(noticeId);
-        return ResponseEntity.ok(dto);
+        //삭제 대상 db + 디스크에서 제거
+        for (UploadFile deleteFile : toDelete) {
+            notice.removeFile(deleteFile); //연관관계 삭제
+            uploadFileUtil.deleteUploadFile(deleteFile); //디스크 삭제
+            uploadFileRepository.delete(deleteFile); //db 삭제
+        }
+
+        //연관관계 연결(추가)
+        //새로 추가한 파일 디스크에 저장
+        List<UploadFile> uploadImageFiles = uploadFileUtil.storeFiles(files); //디스크 저장
+        for (UploadFile uploadFile : uploadImageFiles) {
+            notice.addFile(uploadFile); //연관관계 추가
+            uploadFileRepository.save(uploadFile); //db 저장
+        }
     }
 
-    @Transactional
-    public ResponseEntity<ResNoticeDetailDto> updateNotice(Long noticeId, NoticeDto noticeDto, List<MultipartFile> files) throws IOException {
-        // 0) 조회/검증
-        Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 공지사항입니다."));
+    //조회수 증가
+    //TODO:notFoundException 추가하기
+    public void updateViewCount(Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId).orElseThrow(() -> new IllegalStateException("존재하는 공지사항이 아닙니다."));
 
-        // 1) 본문 수정
-        notice.update(noticeDto.getTitle(), noticeDto.getContent());
-
-        // 2) 새 파일이 실제로 존재할 때만 교체 (files가 비어있거나 전부 empty면 스킵)
-        boolean hasNewFiles = files != null && files.stream().anyMatch(f -> f != null && !f.isEmpty());
-        if (hasNewFiles) {
-            // (a) 구파일 스냅샷(디스크 삭제 용도) - 여기서 "복사본"을 만들어야 CME 안 남
-            List<UploadFile> oldFilesSnapshot = new java.util.ArrayList<>(notice.getUploadFiles());
-            List<String> oldStoreNames = oldFilesSnapshot.stream()
-                    .map(UploadFile::getStoreFileName)
-                    .toList();
-
-            // (b) 새 파일 디스크 저장 (중간 실패 시 예외 -> 트랜잭션 롤백)
-            List<UploadFile> newUploadFiles = uploadFileUtil.storeFiles(files);
-
-            // (c) DB에서 구첨부 삭제 (연관관계 orphanRemoval 미사용 구조라면 필요)
-            uploadFileRepository.deleteAllByNoticeId(noticeId);
-
-            // (d) 컬렉션은 반드시 for-each remove 대신 한 번에 clear()
-            notice.getUploadFiles().clear();
-
-            // (e) 신규 첨부 연결 + DB 저장(cascade 미사용 구조이므로 save 필요)
-            for (UploadFile uf : newUploadFiles) {
-                notice.addFile(uf);           // fk 세팅(uf.setNotice(this))
-                uploadFileRepository.save(uf);
-            }
-
-            // (f) 커밋 확정 후에만 디스크 구파일 삭제 (롤백 대비)
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        uploadFileUtil.deleteFiles(oldStoreNames); // List<String> 지원 메서드
-                    } catch (Exception e) {
-                        log.error("커밋 후 구파일 삭제 실패: {}", oldStoreNames, e);
-                    }
-                }
-            });
-        }
-
-        // 3) 최신 상태 재조회하여 응답
-        ResNoticeDetailDto dto = noticeQueryRepository.getResNoticeDetailDto(noticeId);
-        return ResponseEntity.ok(dto);
+        //조회수 증가
+        notice.updateViewCount();
     }
 }
