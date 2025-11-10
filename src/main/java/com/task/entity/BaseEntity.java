@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @EntityListeners(AuditingEntityListener.class)
-@MappedSuperclass
+@MappedSuperclass //테이블 직접 생성X
 @Getter
 public class BaseEntity {
     @CreatedDate

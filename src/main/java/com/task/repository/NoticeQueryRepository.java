@@ -24,17 +24,10 @@ public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    //공지사항 + 회원 fetchJoin 가져오기
-    public List<Notice> getNoticeWIthMember(){
-       return queryFactory
-                .selectFrom(QNotice.notice)
-                .join(QNotice.notice.member, QMember.member)
-                .fetchJoin()
-                .fetch();
-    }
-
-    //공지사항 전체 리스트 가져오기
-    public Page<ResNoticeDto> getResNoticeDto(Pageable pageRequest){
+    /**
+     * 공지사항 전체 조회
+     */
+    public Page<ResNoticeListDto> getResNoticeDto(Pageable pageRequest){
         long offset = pageRequest.getOffset(); //몇개 건너뛸지
         int pageSize = pageRequest.getPageSize(); //한 페이지에 노출할 데이터 건수
 
@@ -48,8 +41,8 @@ public class NoticeQueryRepository {
         JPAQuery<Long> totalCount = queryFactory.select(QNotice.notice.count()).from(QNotice.notice);
 
         //페이징 처리
-        List<ResNoticeDto> list = queryFactory
-                .select(new QResNoticeDto(
+        List<ResNoticeListDto> list = queryFactory
+                .select(new QResNoticeListDto(
                         QNotice.notice.id,
                         QNotice.notice.title,
                         QNotice.notice.createdDate,
@@ -68,15 +61,17 @@ public class NoticeQueryRepository {
         return PageableExecutionUtils.getPage(list, pageRequest, totalCount::fetchOne);
     }
 
+    /**
+     * 공지사항 상세 조회
+     */
     public ResNoticeDetailDto getResNoticeDetailDto(Long noticeId) {
-        //공지사항 가져오기
         ResNoticeDetailDto resNoticeDetailDto = queryFactory
                 .select(new QResNoticeDetailDto(
                         QNotice.notice.id,
                         QNotice.notice.title,
                         QNotice.notice.content,
-                        QNotice.notice.modifiedBy,
-                        QNotice.notice.lastModifiedDate,
+                        QNotice.notice.createdBy,
+                        QNotice.notice.createdDate,
                         QNotice.notice.viewCount
                 ))
                 .from(QNotice.notice)
@@ -91,19 +86,31 @@ public class NoticeQueryRepository {
         List<UploadFileCdnDto> uploadFileCdnDtoList = queryFactory
                 .select(new QUploadFileCdnDto(
                         QUploadFile.uploadFile.id,
-                        QUploadFile.uploadFile.uploadFileName,
-                        QUploadFile.uploadFile.storeFileName
+                        QUploadFile.uploadFile.uploadFileName
                 ))
                 .from(QUploadFile.uploadFile)
                 .where(QUploadFile.uploadFile.notice.id.eq(noticeId))
                 .fetch();
 
         //공지사항 상세에 파일리스트 저장
-        if(uploadFileCdnDtoList != null && !uploadFileCdnDtoList.isEmpty()){
+        if(uploadFileCdnDtoList != null){
             resNoticeDetailDto.setUploadFilePathCdnList(uploadFileCdnDtoList);
         }
 
         return resNoticeDetailDto;
     }
 
+
+    /**
+     * 조회수 증가
+     */
+    public boolean updateViewCount(Long id){
+        long updateCount = queryFactory
+                .update(QNotice.notice)
+                .set(QNotice.notice.viewCount, QNotice.notice.viewCount.add(1))
+                .where(QNotice.notice.id.eq(id))
+                .execute();
+
+        return updateCount == 1;
+    }
 }

@@ -51,6 +51,7 @@ public class Notice extends BaseEntity {
         uploadFile.setNotice(null);
     }
 
+    //조회수 증가 메서드
     public void updateViewCount(){
         this.viewCount += 1;
     }

@@ -17,10 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @Component
-@Transactional
-@RequiredArgsConstructor
 public class UploadFileUtil {
 
     @Value("${file.dir}")
@@ -42,8 +39,7 @@ public class UploadFileUtil {
 
         for (MultipartFile multipartFile : multipartFiles) {
             if (!multipartFile.isEmpty()) {
-                //파일 저장
-                storeFileResult.add(storeFile(multipartFile));
+                storeFileResult.add(storeFile(multipartFile)); //파일 디스크 저장
             }
         }
         return storeFileResult;

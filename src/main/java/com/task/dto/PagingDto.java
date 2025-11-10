@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class PagingResponse<T> {
+public class PagingDto<T> {
 
     private List<T> content;
     private int totalPages; //전체 페이지 수
@@ -16,8 +16,8 @@ public class PagingResponse<T> {
     private int currentPage; //현재 페이지
 
     //편의 메서드
-    public static <T> PagingResponse<T> createPagingResponse(Page<T> page){
-        return new PagingResponse<>(
+    public static <T> PagingDto<T> createPaging(Page<T> page){
+        return new PagingDto<>(
                 page.getContent(),
                 page.getTotalPages(),
                 page.getTotalElements(),
