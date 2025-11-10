@@ -12,20 +12,14 @@ import java.time.LocalDateTime;
 public class ResNoticeDto {
     private Long noticeId;
     private String title;
-    private String content;
-    private String uploadFileName;
-    private String modifiedBy;
-    private LocalDateTime lastModifiedDate;
+    private LocalDateTime createdDate;
     private Long viewCount;
 
     @QueryProjection
-    public ResNoticeDto(Long noticeId, String title, String content, String uploadFileName, String modifiedBy, LocalDateTime lastModifiedDate, Long viewCount) {
+    public ResNoticeDto(Long noticeId, String title, LocalDateTime createdDate, Long viewCount) {
         this.noticeId = noticeId;
         this.title = title;
-        this.content = content;
-        this.uploadFileName = uploadFileName;
-        this.modifiedBy = modifiedBy;
-        this.lastModifiedDate = lastModifiedDate;
+        this.createdDate = createdDate;
         this.viewCount = viewCount;
     }
 }

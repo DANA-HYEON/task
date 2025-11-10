@@ -1,13 +1,15 @@
 package com.task.controller;
 
-import com.task.dto.NoticeDto;
-import com.task.dto.ResNoticeDetailDto;
-import com.task.dto.ResNoticeDto;
+import com.task.dto.*;
 import com.task.service.NoticeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,9 +28,18 @@ public class NoticeController {
 
     //공지사항 리스트
     @GetMapping
-    //TODO: 페이징 적용
-    public ResponseEntity<List<ResNoticeDto>> noticeList(){
-        return noticeService.getNoticeList();
+    public ResponseEntity<ResponseDto> noticeList(@RequestParam(defaultValue = "desc")String direction,
+                                                  @PageableDefault(size = 10) Pageable pageable){
+        //공지사항 dto 가져오기
+        Page<ResNoticeDto> noticeList = noticeService.getNoticeList(direction, pageable);
+        
+        //페이징 dto 감싸기
+        PagingResponse<ResNoticeDto> pagingResponse = PagingResponse.createPagingResponse(noticeList);
+        
+        //최종 응답 dto 감싸기
+        ResponseDto response = new ResponseDto("정상적으로 조회되었습니다.", pagingResponse);
+        return ResponseEntity.ok()
+                .body(response);
     }
 
     //공지사항 상세

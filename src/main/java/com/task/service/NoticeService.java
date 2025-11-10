@@ -1,6 +1,7 @@
 package com.task.service;
 
 import com.task.dto.NoticeDto;
+import com.task.dto.PagingResponse;
 import com.task.dto.ResNoticeDetailDto;
 import com.task.dto.ResNoticeDto;
 import com.task.entity.Member;
@@ -15,10 +16,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
@@ -44,10 +51,19 @@ public class NoticeService {
 
     //queryDsl
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ResNoticeDto>> getNoticeList(){
-        List<ResNoticeDto> resNoticeDto = noticeQueryRepository.getResNoticeDto();
-        return ResponseEntity.ok()
-                .body(resNoticeDto);
+    public Page<ResNoticeDto> getNoticeList(@RequestParam(defaultValue = "desc") String direction,
+                                            @PageableDefault(size = 10) Pageable pageable){
+        //asc,desc만 허용
+        Sort.Direction sort = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        
+        //사이즈 제한
+        if(pageable.getPageSize() > 50) {
+            throw new IllegalStateException("한 페이지 최대 50건까지만 허용됩니다.");
+        }
+
+        //패이징 조건 생성
+        Pageable pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(sort, "createdDate"));
+        return noticeQueryRepository.getResNoticeDto(pageRequest);
     }
 
 
