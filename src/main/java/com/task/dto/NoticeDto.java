@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class NoticeDto {
 
-    @NotNull(message = "작성자 id 는 필수값입니다.")
+    @NotNull(message = "작성자 id는 필수값입니다.")
     private Long memberId;
     private String title;
     private String content;

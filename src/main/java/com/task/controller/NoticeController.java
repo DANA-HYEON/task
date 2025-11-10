@@ -71,9 +71,9 @@ public class NoticeController {
     @DeleteMapping("/{noticeId}")
     public ResponseEntity<ResponseDto> deleteNotice(HttpServletRequest request,
                                                     @PathVariable Long noticeId){
-        String usrename = request.getHeader(USER_NAME_HEADER);
+        String username = request.getHeader(USER_NAME_HEADER);
 
-        Boolean result = noticeService.deleteNotice(usrename, noticeId);
+        Boolean result = noticeService.deleteNotice(username, noticeId);
         ResponseDto response = new ResponseDto("정상적으로 삭제되었습니다.", result);
         return ResponseEntity.ok()
                 .body(response);
@@ -95,6 +95,7 @@ public class NoticeController {
                                                @RequestPart(value = "originFileIds", required = false) List<Long> originFileIds,
                                                //새로추가할 파일들
                                                @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+
         String usrename = request.getHeader(USER_NAME_HEADER);
         Long updatedNoticeId = noticeService.updateNotice(usrename, noticeId, noticeDto, originFileIds, files);
         ResponseDto responseDto = new ResponseDto("정상적으로 수정되었습니다.", updatedNoticeId);
