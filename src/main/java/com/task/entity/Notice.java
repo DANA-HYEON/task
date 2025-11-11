@@ -2,6 +2,7 @@ package com.task.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class Notice extends BaseEntity {
 
     @OneToMany(mappedBy = "notice", fetch = FetchType.LAZY)
     @Builder.Default
+//    @BatchSize(size = 50)
     List<UploadFile> uploadFiles = new ArrayList<>();
 
     //연관관계 메서드
