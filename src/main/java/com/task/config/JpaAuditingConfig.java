@@ -1,5 +1,7 @@
 package com.task.config;
 
+import com.task.entity.Member;
+import com.task.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,11 +13,13 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @EnableJpaAuditing
 @Configuration
+@RequiredArgsConstructor
 public class JpaAuditingConfig {
-    private static final String USER_NAME_HEADER = "Username";
+    private static final String MEMBER_ID_HEADER = "Member-Id";
+
+    private final MemberRepository memberRepository;
 
     @Bean
     public AuditorAware<String> auditorAware() {
@@ -30,13 +34,29 @@ public class JpaAuditingConfig {
                 }
 
                 HttpServletRequest request = attributes.getRequest();
-                String userName = request.getHeader(USER_NAME_HEADER);
+                String memberId  = request.getHeader(MEMBER_ID_HEADER);
 
-                if (userName == null || userName.isBlank()) {
-                    userName = "NON_USER";
+                //헤더가 없으면 비회원
+                if (memberId  == null || memberId .isBlank()) {
+                    return Optional.of("NON_USER");
                 }
 
-                return Optional.of(userName);
+                if(memberId.equals("SYSTEM")){
+                    return Optional.of("SYSTEM");
+                }
+
+                // memberId를 Long으로 변환 후 DB 조회
+                Long id = Long.parseLong(memberId);
+                Member member = memberRepository.findById(id).orElse(null);
+                String username;
+
+                if(member == null){
+                    username = "NON_USER";
+                }else{
+                    username = member.getName();
+                }
+
+                return Optional.of(username);
             }catch (Exception e){
                 return Optional.of("SYSTEM");
             }

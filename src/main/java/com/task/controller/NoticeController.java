@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/notice")
 public class NoticeController {
-    private static final String USER_NAME_HEADER = "Username";
+    private static final String MEMBER_ID_HEADER = "Member-Id";
     private static final String VIEW_COOKIE_NAME = "noticeView";
     private static final int COOKIE_MAX_AGE = 60 * 60 * 24; // 1일
     
@@ -59,21 +60,35 @@ public class NoticeController {
 
     //공지사항 등록
     @PostMapping
-    public ResponseEntity<ResponseDto> saveNoticePost(@RequestPart("notice") @Valid NoticeDto noticeDto,
-                                                     @RequestPart(value = "files", required = false) List<MultipartFile> files){
-        Long savedNoticeId = noticeService.saveNoticePost(noticeDto, files);
+    public ResponseEntity<ResponseDto> saveNoticePost(HttpServletRequest request,
+                                                      @RequestPart("notice") NoticeDto noticeDto,
+                                                      @RequestPart(value = "files", required = false) List<MultipartFile> files){
+        String memberIdHeader = request.getHeader(MEMBER_ID_HEADER);
+
+        if(memberIdHeader == null || memberIdHeader.isBlank()){
+            ResponseDto response = new ResponseDto("헤더에 Member-Id가 없습니다.", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(response);
+        }
+
+        Long savedNoticeId = noticeService.saveNoticePost(memberIdHeader, noticeDto, files);
         ResponseDto response = new ResponseDto("정상적으로 저장되었습니다.", savedNoticeId);
         return ResponseEntity.ok()
                 .body(response);
     }
-
     //공지사항 삭제
     @DeleteMapping("/{noticeId}")
     public ResponseEntity<ResponseDto> deleteNotice(HttpServletRequest request,
                                                     @PathVariable Long noticeId){
-        String username = request.getHeader(USER_NAME_HEADER);
+        String memberIdHeader = request.getHeader(MEMBER_ID_HEADER);
 
-        Boolean result = noticeService.deleteNotice(username, noticeId);
+        if(memberIdHeader == null || memberIdHeader.isBlank()){
+            ResponseDto response = new ResponseDto("헤더에 Member-Id가 없습니다.", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(response);
+        }
+
+        Boolean result = noticeService.deleteNotice(memberIdHeader, noticeId);
         ResponseDto response = new ResponseDto("정상적으로 삭제되었습니다.", result);
         return ResponseEntity.ok()
                 .body(response);
@@ -90,14 +105,21 @@ public class NoticeController {
     public ResponseEntity<ResponseDto> updateNotice(
                                                HttpServletRequest request,
                                                @PathVariable Long noticeId,
-                                               @RequestPart("notice") @Valid NoticeDto noticeDto,
+                                               @RequestPart("notice") NoticeDto noticeDto,
                                                //유지할 기존 첨부파일 ids
                                                @RequestPart(value = "originFileIds", required = false) List<Long> originFileIds,
                                                //새로추가할 파일들
                                                @RequestPart(value = "files", required = false) List<MultipartFile> files) {
 
-        String usrename = request.getHeader(USER_NAME_HEADER);
-        Long updatedNoticeId = noticeService.updateNotice(usrename, noticeId, noticeDto, originFileIds, files);
+        String memberIdHeader = request.getHeader(MEMBER_ID_HEADER);
+
+        if(memberIdHeader == null || memberIdHeader.isBlank()){
+            ResponseDto response = new ResponseDto("헤더에 Member-Id가 없습니다.", null);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(response);
+        }
+
+        Long updatedNoticeId = noticeService.updateNotice(memberIdHeader, noticeId, noticeDto, originFileIds, files);
         ResponseDto responseDto = new ResponseDto("정상적으로 수정되었습니다.", updatedNoticeId);
         return ResponseEntity.ok()
                 .body(responseDto);
@@ -109,7 +131,6 @@ public class NoticeController {
                                                 HttpServletRequest request,
                                                 HttpServletResponse response,
                                                 @PathVariable Long noticeId){
-
         Cookie oldCookie = null;
 
         //쿠키 가져오기
@@ -136,6 +157,7 @@ public class NoticeController {
                 oldCookie.setValue(oldCookie.getValue() + "_" + noticeId.toString());
                 oldCookie.setPath("/");
                 oldCookie.setMaxAge(COOKIE_MAX_AGE);
+                oldCookie.setHttpOnly(true);
                 response.addCookie(oldCookie);
             }else{
                 //이미 조회한 게시글
@@ -150,6 +172,7 @@ public class NoticeController {
             Cookie newCookie = new Cookie(VIEW_COOKIE_NAME, noticeId.toString());
             newCookie.setPath("/");
             newCookie.setMaxAge(COOKIE_MAX_AGE);
+            newCookie.setHttpOnly(true); //JavaScript에서 접근할 수 없게 막는 설정
             response.addCookie(newCookie);
         }
 

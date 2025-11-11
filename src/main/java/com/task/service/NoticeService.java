@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,9 +68,9 @@ public class NoticeService {
     }
 
 
-    public Long saveNoticePost(NoticeDto noticeDto, List<MultipartFile> files) {
+    public Long saveNoticePost(String memberIdHeader, NoticeDto noticeDto, List<MultipartFile> files) {
         //회원 조회
-        Long memberId = noticeDto.getMemberId();
+        long memberId = Long.parseLong(memberIdHeader);
         Member findMember = memberRepository.findById(memberId).orElseThrow(() -> new IllegalStateException("존재하지 않는 유저입니다."));
 
         //첨부파일 갯수 제한
@@ -118,11 +119,11 @@ public class NoticeService {
         return noticeQueryRepository.getResNoticeDetailDto(noticeId);
     }
 
-    public Boolean deleteNotice(String username, Long noticeId){
+    public Boolean deleteNotice(String memberIdHeader, Long noticeId){
         //해당 공지사항이 있는지 확인
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(() -> new IllegalStateException("존재하지 않는 공지사항입니다."));
 
-        if(!notice.getCreatedBy().equals(username)){
+        if(notice.getMember().getId() != Long.parseLong(memberIdHeader)){
             throw new IllegalStateException("삭제 권한이 없습니다.");
         }
 
@@ -169,12 +170,11 @@ public class NoticeService {
         }
     }
 
-
-    public Long updateNotice(String username, Long noticeId, NoticeDto noticeDto, List<Long> originFileIds, List<MultipartFile> files){
+    public Long updateNotice(String memberIdHeader, Long noticeId, NoticeDto noticeDto, List<Long> originFileIds, List<MultipartFile> files){
         //수정할 공지사항 조회
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalStateException("존재하지 않는 공지사항입니다."));
 
-        if(!notice.getCreatedBy().equals(username)){
+        if(notice.getMember().getId() != Long.parseLong(memberIdHeader)){
             throw new IllegalStateException("수정 권한이 없습니다.");
         }
         

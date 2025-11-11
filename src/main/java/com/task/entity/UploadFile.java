@@ -1,16 +1,13 @@
 package com.task.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UploadFile extends BaseEntity{
+public class UploadFile{
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "UPLOAD_FILE_ID")
